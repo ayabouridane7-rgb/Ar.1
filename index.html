@@ -1,0 +1,713 @@
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#050510,#111133,#220044);
+height:100vh;
+overflow:hidden;
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+}
+
+#menu,
+#gameOver{
+position:absolute;
+inset:0;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+gap:25px;
+background:rgba(0,0,0,.65);
+backdrop-filter:blur(10px);
+z-index:20;
+}
+
+#gameOver{
+display:none;
+}
+
+h1{
+font-size:48px;
+font-weight:700;
+letter-spacing:2px;
+text-shadow:0 0 25px cyan;
+}
+
+h2{
+font-size:42px;
+color:#ff4b7d;
+text-shadow:0 0 20px #ff4b7d;
+}
+
+button{
+padding:16px 42px;
+border:none;
+border-radius:50px;
+font-size:20px;
+font-weight:700;
+cursor:pointer;
+background:linear-gradient(45deg,#00e5ff,#00ff95);
+color:#111;
+transition:.25s;
+box-shadow:0 0 25px cyan;
+}
+
+button:hover{
+transform:scale(1.08);
+box-shadow:0 0 40px #00ffff;
+}
+
+#hud{
+position:absolute;
+top:15px;
+left:50%;
+transform:translateX(-50%);
+display:flex;
+gap:18px;
+z-index:5;
+}
+
+#hud div{
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(8px);
+padding:10px 18px;
+border-radius:18px;
+border:1px solid rgba(255,255,255,.15);
+font-weight:600;
+box-shadow:0 0 12px rgba(0,255,255,.25);
+}
+
+#game{
+position:relative;
+width:95vw;
+max-width:900px;
+height:78vh;
+border-radius:25px;
+overflow:hidden;
+background:
+radial-gradient(circle at top,#1b1b4f,#05050f);
+border:2px solid rgba(0,255,255,.3);
+box-shadow:
+0 0 30px rgba(0,255,255,.35),
+inset 0 0 40px rgba(255,255,255,.05);
+}
+
+#target{
+position:absolute;
+width:75px;
+height:75px;
+border-radius:50%;
+cursor:pointer;
+background:
+radial-gradient(circle,#ffffff,#ff2e8a,#6b00ff);
+box-shadow:
+0 0 18px #ff2e8a,
+0 0 45px #6b00ff;
+transition:
+transform .12s;
+}
+
+#target:active{
+transform:scale(.88);
+}
+
+.hit{
+animation:boom .35s;
+}
+
+@keyframes boom{
+
+0%{
+transform:scale(1);
+}
+
+50%{
+transform:scale(1.45);
+}
+
+100%{
+transform:scale(.4);
+opacity:0;
+}
+
+}
+
+.levelFlash{
+animation:bgFlash .6s;
+}
+
+@keyframes bgFlash{
+
+0%{
+filter:brightness(1);
+}
+
+50%{
+filter:brightness(1.35);
+}
+
+100%{
+filter:brightness(1);
+}
+
+}
+
+@media(max-width:700px){
+
+h1{
+font-size:34px;
+}
+
+#target{
+width:60px;
+height:60px;
+}
+
+#hud{
+gap:8px;
+flex-wrap:wrap;
+justify-content:center;
+}
+
+#hud div{
+font-size:14px;
+padding:8px 12px;
+}
+
+button{
+font-size:18px;
+padding:14px 28px;
+}
+
+}const menu = document.getElementById("menu");
+const playBtn = document.getElementById("playBtn");
+
+const game = document.getElementById("game");
+const target = document.getElementById("target");
+
+const scoreText = document.getElementById("score");
+const lifeText = document.getElementById("life");
+const levelText = document.getElementById("level");
+const bestText = document.getElementById("best");
+
+const gameOver = document.getElementById("gameOver");
+const restart = document.getElementById("restart");
+const finalScore = document.getElementById("finalScore");
+
+const hitSound = document.getElementById("hit");
+const bgMusic = document.getElementById("bg");
+
+let score = 0;
+let life = 3;
+let level = 1;
+
+let best = localStorage.getItem("bestScore") || 0;
+bestText.textContent = best;
+
+let moveSpeed = 900;
+let moveLoop;
+
+function randomPosition(){
+
+const maxX = game.clientWidth - target.offsetWidth;
+const maxY = game.clientHeight - target.offsetHeight;
+
+const x = Math.random() * maxX;
+const y = Math.random() * maxY;
+
+target.style.left = x + "px";
+target.style.top = y + "px";
+
+}
+
+function updateHUD(){
+
+scoreText.textContent = score;
+lifeText.textContent = life;
+levelText.textContent = level;
+
+}
+
+function startGame(){
+
+menu.style.display = "none";
+gameOver.style.display = "none";
+
+score = 0;
+life = 3;
+level = 1;
+moveSpeed = 900;
+
+updateHUD();
+
+randomPosition();
+
+clearInterval(moveLoop);
+
+moveLoop = setInterval(moveTarget,moveSpeed);
+
+bgMusic.volume = 0.35;
+bgMusic.play().catch(()=>{});
+
+}
+
+playBtn.onclick = startGame;
+
+restart.onclick = startGame;Neon-Target-Rush/
+│
+├── index.html
+├── style.css
+├── script.js
+├── sounds/
+│   ├── hit.mp3
+│   ├── miss.mp3
+│   └── bg.mp3
+├── images/
+│   └── icon.png
+└── README.mdfunction endGame() {
+
+    clearInterval(moveLoop);
+
+    bgMusic.pause();
+
+    finalScore.textContent = score;
+
+    if (score > best) {
+
+        best = score;
+
+        localStorage.setItem("bestScore", best);
+
+        bestText.textContent = best;
+
+    }
+
+    gameOver.style.display = "flex";
+
+}
+
+window.onload = () => {
+
+    updateHUD();
+
+    randomPosition();
+
+};/* ========= PARTICLES ========= */
+
+function createParticles(x, y) {
+
+    for (let i = 0; i < 12; i++) {
+
+        const p = document.createElement("div");
+
+        p.className = "particle";
+
+        p.style.left = x + "px";
+        p.style.top = y + "px";
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 80;
+
+        p.style.setProperty("--x", Math.cos(angle) * distance + "px");
+        p.style.setProperty("--y", Math.sin(angle) * distance + "px");
+
+        game.appendChild(p);
+
+        setTimeout(() => {
+            p.remove();
+        }, 700);
+
+    }
+
+}
+
+/* ========= GOLD TARGET ========= */
+
+let goldChance = 0;
+
+function randomTargetColor() {
+
+    goldChance++;
+
+    if (goldChance >= 7) {
+
+        goldChance = 0;
+
+        target.style.background =
+        "radial-gradient(circle,#fff7a8,#ffd700,#ff9800)";
+
+        target.dataset.gold = "true";
+
+    } else {
+
+        target.style.background =
+        "radial-gradient(circle,#ffffff,#ff2e8a,#6b00ff)";
+
+        target.dataset.gold = "false";
+
+    }
+
+}
+
+const oldRandom = randomPosition;
+
+randomPosition = function(){
+
+    oldRandom();
+
+    randomTargetColor();
+
+}
+
+/* ========= CLICK BONUS ========= */
+
+target.addEventListener("click",(e)=>{
+
+    createParticles(
+        e.clientX - game.getBoundingClientRect().left,
+        e.clientY - game.getBoundingClientRect().top
+    );
+
+    if(target.dataset.gold==="true"){
+
+        score+=4;
+
+        updateHUD();
+
+    }
+
+});function moveTarget() {
+
+    randomPosition();
+
+    life--;
+
+    updateHUD();
+
+    if (life <= 0) {
+        endGame();
+    }
+
+}
+
+target.addEventListener("click", function (e) {
+
+    e.stopPropagation();
+
+    score++;
+
+    if (hitSound) {
+        hitSound.currentTime = 0;
+        hitSound.play().catch(() => {});
+    }
+
+    target.classList.add("hit");
+
+    setTimeout(() => {
+        target.classList.remove("hit");
+    }, 250);
+
+    randomPosition();
+
+    updateHUD();
+
+    if (score % 10 === 0) {
+
+        level++;
+
+        game.classList.add("levelFlash");
+
+        setTimeout(() => {
+            game.classList.remove("levelFlash");
+        }, 500);
+
+        clearInterval(moveLoop);
+
+        moveSpeed = Math.max(250, moveSpeed - 80);
+
+        moveLoop = setInterval(moveTarget, moveSpeed);
+
+    }
+
+});
+
+game.addEventListener("click", function () {
+
+    life--;
+
+    updateHUD();
+
+    if (life <= 0) {
+        endGame();
+    }
+
+});/* ========= LEVEL COLORS ========= */
+
+const levelColors = [
+
+"linear-gradient(135deg,#050510,#111133,#220044)",
+
+"linear-gradient(135deg,#001d3d,#003566,#00b4d8)",
+
+"linear-gradient(135deg,#240046,#5a189a,#9d4edd)",
+
+"linear-gradient(135deg,#0b090a,#660708,#ba181b)",
+
+"linear-gradient(135deg,#14213d,#fca311,#e5e5e5)",
+
+"linear-gradient(135deg,#003049,#d62828,#f77f00)"
+
+];
+
+function updateBackground(){
+
+document.body.style.background =
+levelColors[(level-1)%levelColors.length];
+
+}
+
+/* ========= LEVEL UPDATE ========= */
+
+const oldHUD = updateHUD;
+
+updateHUD = function(){
+
+oldHUD();
+
+updateBackground();
+
+}
+
+/* ========= WIN SCREEN ========= */
+
+const MAX_LEVEL = 20;
+
+const oldClick = target.onclick;
+
+target.addEventListener("click",()=>{
+
+if(level>=MAX_LEVEL){
+
+clearInterval(moveLoop);
+
+bgMusic.pause();
+
+gameOver.style.display="flex";
+
+document.querySelector("#gameOver h2").innerText="🏆 YOU WIN";
+
+}
+
+});body{
+
+transition:1s;
+
+}
+
+#game{
+
+transition:1s;
+
+}.particle{
+
+position:absolute;
+
+width:8px;
+height:8px;
+
+border-radius:50%;
+
+background:#fff;
+
+pointer-events:none;
+
+animation:particle .7s linear forwards;
+
+box-shadow:0 0 12px cyan;
+
+}
+
+@keyframes particle{
+
+0%{
+
+transform:translate(0,0) scale(1);
+
+opacity:1;
+
+}
+
+100%{
+
+transform:
+translate(var(--x),var(--y))
+scale(0);
+
+opacity:0;
+
+}
+}let secondTarget;
+
+function createSecondTarget(){
+
+if(secondTarget) return;
+
+secondTarget = target.cloneNode(true);
+
+secondTarget.id="target2";
+
+game.appendChild(secondTarget);
+
+moveSecond();
+
+secondTarget.addEventListener("click",()=>{
+
+score+=2;
+
+updateHUD();
+
+moveSecond();
+
+});
+
+}
+
+function moveSecond(){
+
+if(!secondTarget) return;
+
+const x=Math.random()*(game.clientWidth-70);
+
+const y=Math.random()*(game.clientHeight-70);
+
+secondTarget.style.left=x+"px";
+
+secondTarget.style.top=y+"px";
+
+}
+
+setInterval(()=>{
+
+if(level>=8){
+
+createSecondTarget();
+
+moveSecond();
+
+}
+
+},900);/* ========= COMBO SYSTEM ========= */
+
+let combo = 0;
+let lastHit = 0;
+
+function comboHit() {
+
+    const now = Date.now();
+
+    if (now - lastHit < 800) {
+        combo++;
+    } else {
+        combo = 1;
+    }
+
+    lastHit = now;
+
+    if (combo === 5) {
+        score += 5;
+        showText("COMBO x5", "#00ffcc");
+    }
+
+    if (combo === 10) {
+        score += 15;
+        showText("MEGA COMBO!", "#ffd700");
+        combo = 0;
+    }
+
+}
+
+/* ========= FLOATING TEXT ========= */
+
+function showText(text,color){
+
+    const div=document.createElement("div");
+
+    div.innerText=text;
+
+    div.className="floating";
+
+    div.style.color=color;
+
+    div.style.left=(target.offsetLeft+15)+"px";
+    div.style.top=(target.offsetTop-10)+"px";
+
+    game.appendChild(div);
+
+    setTimeout(()=>{
+        div.remove();
+    },900);
+
+}
+
+/* ========= PHONE VIBRATION ========= */
+
+function vibrate(){
+
+    if(navigator.vibrate){
+
+        navigator.vibrate(25);
+
+    }
+
+}
+
+/* ========= EXTRA EFFECT ========= */
+
+target.addEventListener("click",()=>{
+
+    comboHit();
+
+    vibrate();
+
+});.floating{
+
+position:absolute;
+
+font-size:18px;
+
+font-weight:bold;
+
+pointer-events:none;
+
+animation:floatUp .9s forwards;
+
+text-shadow:0 0 15px currentColor;
+
+}
+
+@keyframes floatUp{
+
+0%{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+100%{
+
+opacity:0;
+
+transform:translateY(-60px);
+
+}
+
+}
